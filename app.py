@@ -1,3 +1,19 @@
+import streamlit as st  # <--- ESTA LÍNEA DEBE IR PRIMERO QUE TODO
+import pandas as pd
+import time
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# Configuración de la página de Streamlit
+st.set_page_config(page_title="Flashscore Live Stats Bot", layout="wide")
+st.title("⚽ Flashscore Live Tracker - Estadísticas en Vivo")
+st.subheader("Monitoreo en tiempo real para análisis de apuestas")
+
 @st.cache_resource
 def get_driver():
     chrome_options = Options()
