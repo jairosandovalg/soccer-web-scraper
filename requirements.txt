@@ -1,4 +1,2 @@
 streamlit
 selenium
-beautifulsoup4
-pandas
