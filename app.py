@@ -9,9 +9,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 # Configuración básica de Streamlit
-st.set_page_config(page_title="Paso 2: Clic En Directo", layout="wide")
-st.title("⚽ Bot de Estadísticas - Paso 2")
-st.subheader("Ingreso a la sección EN DIRECTO y conteo de partidos")
+st.set_page_config(page_title="Paso 3: Enlaces de Partidos", layout="wide")
+st.title("⚽ Bot de Estadísticas - Paso 3")
+st.subheader("Extracción de partidos en vivo y sus enlaces de estadísticas")
 
 @st.cache_resource
 def iniciar_navegador():
@@ -36,7 +36,7 @@ def iniciar_navegador():
 
 # --- INTERFAZ DE STREAMLIT ---
 
-if st.button("🚀 Ir a En Directo y Contar Partidos"):
+if st.button("🔗 Listar Partidos y Enlaces en Vivo"):
     with st.spinner("Conectando a Flashscore Perú..."):
         try:
             driver = iniciar_navegador()
@@ -45,46 +45,51 @@ if st.button("🚀 Ir a En Directo y Contar Partidos"):
             url = "https://www.flashscore.pe/"
             driver.get(url)
             
-            # 2. Buscar el botón "EN DIRECTO" solicitado mediante su clase y texto
-            st.text("Buscando el botón 'EN DIRECTO'...")
-            
-            # Esperamos un máximo de 10 segundos a que el elemento sea visible y cliqueable
+            # 2. Hacer clic en "EN DIRECTO"
             boton_directo = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'filters__text') and text()='EN DIRECTO']"))
             )
-            
-            # Hacer clic usando JavaScript para asegurar la acción en entornos en la nube
             driver.execute_script("arguments[0].click();", boton_directo)
             
-            st.text("¡Clic realizado con éxito! Esperando que cargue la lista de partidos en vivo...")
-            time.sleep(4)  # Espera de cortesía para que cargue el contenido dinámico
+            st.text("Ingresando a la sección 'EN DIRECTO'...")
+            time.sleep(4)  # Espera para carga total del contenido dinámico
             
-            # 3. Analizar el HTML obtenido tras el clic
+            # 3. Analizar el HTML con BeautifulSoup
             soup = BeautifulSoup(driver.page_source, "html.parser")
             
-            # En Flashscore, los partidos en vivo usan filas con IDs que comienzan con "g_1_"
+            # Buscamos las filas de partidos en vivo (que contienen id que inicia con "g_1_")
             partidos_en_vivo = soup.find_all("div", id=lambda x: x and x.startswith("g_1_"))
             
-            # 4. Mostrar el resultado del análisis solicitado
-            cantidad_partidos = len(partidos_en_vivo)
-            
-            if cantidad_partidos == 0:
-                st.warning("Se ingresó a la sección 'EN DIRECTO' pero no se detectaron partidos activos en este momento.")
+            if not partidos_en_vivo:
+                st.warning("No se detectaron partidos activos en este instante.")
             else:
-                st.success(f"📊 ¡Análisis completado! Actualmente hay **{cantidad_partidos}** partidos en vivo.")
+                st.success(f"📊 ¡Análisis completado! Se encontraron {len(partidos_en_vivo)} partidos en vivo.")
+                st.write("### 📂 Directorio de Partidos en Directo y Enlaces:")
                 
-                # Opcional: Mostrar una lista rápida de los partidos contados para corroborar visualmente
-                st.write("### ⏱️ Partidos detectados en el conteo:")
+                # Recorremos cada partido para extraer nombres y armar URLs
                 for idx, fila in enumerate(partidos_en_vivo):
+                    # Extraer el ID único del partido (ejemplo: K0YnEaMq)
+                    id_partido = fila.get('id').split('_')[-1]
+                    
+                    # Extraer nombres de los equipos utilizando las clases del contenedor
                     local = fila.find("div", class_=lambda c: c and "home" in c.lower() and "participant" in c.lower())
                     visitante = fila.find("div", class_=lambda c: c and "away" in c.lower() and "participant" in c.lower())
                     
                     nom_local = local.get_text(strip=True) if local else "Local"
                     nom_visitante = visitante.get_text(strip=True) if visitante else "Visitante"
                     
-                    st.write(f"- {nom_local} vs {nom_visitante}")
+                    nombre_partido = f"{nom_local} vs {nom_visitante}"
+                    
+                    # Armamos la URL exacta y directa a la pestaña de estadísticas usando el ID
+                    url_estadisticas = f"https://www.flashscore.pe/partido/{id_partido}/#/resumen/estadisticas"
+                    
+                    # 🟢 MOSTRAR EN PANTALLA EL PARTIDO CON SU ENLACE SOLICITADO
+                    st.markdown(f"**{idx + 1}. Partido:** {nombre_partido}")
+                    st.code(url_estadisticas, language="text")  # Formato fácil de copiar
+                    st.markdown(f"[🔗 Abrir pestaña de estadísticas en el navegador]({url_estadisticas})")
+                    st.write("---")  # Línea divisoria entre partidos
                     
         except Exception as e:
-            st.error(f"Error durante el proceso: {str(e)}")
+            st.error(f"Error durante el proceso de extracción: {str(e)}")
 
-    st.info("➡️ Sube este código a tu repositorio. Cuando lo pruebes y te confirme el recuadro verde con la cantidad exacta de partidos en vivo, me avisas para pasar al **Paso 3** (extraer los enlaces de esos partidos e ingresar a la pestaña interna de estadísticas).")
+    st.info("➡️ Sube este código a GitHub. Cuando ejecutes el botón y veas en tu pantalla la lista de partidos con sus respectivas URLs estructuradas en las cajas de texto, confirmamos el éxito y pasamos al **Paso 4** (el paso final: entrar a cada uno de esos links, hacer clic en el botón 'Estadísticas' y plasmar las métricas en la tabla).")
