@@ -46,8 +46,13 @@ if st.button("🚀 Conectar con la Página"):
             titulo_pagina = driver.title
             
             if "Flashscore" in titulo_pagina or "Marcadores" in titulo_pagina:
-                # 🟢 MENSAJE DE ÉXITO SOLICITADO
+                # 🟢 MENSAJE DE ÉXITO
                 st.success(f"¡Estamos en Flashscore! (Validado exitosamente: '{titulo_pagina}')")
                 st.balloons()
             else:
-                st.warning(f"Se ingresó a la URL
+                st.warning(f"Se ingresó a la URL pero el título no coincide de forma esperada: {titulo_pagina}")
+                
+        except Exception as e:
+            st.error(f"Error al intentar ingresar a la página: {str(e)}")
+
+    st.info("➡️ Reemplaza tu archivo en GitHub con este bloque limpio. Una vez que este Paso 1 te arroje el recuadro verde con globos, avísame para integrar de inmediato el Paso 2 (Listar partidos en vivo) sin errores.")
