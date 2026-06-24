@@ -1,31 +1,22 @@
-import streamlit as st
-import pandas as pd
-import time
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-
-# Configuración de la página de Streamlit
-st.set_page_config(page_title="Flashscore Live Stats Bot", layout="wide")
-st.title("⚽ Flashscore Live Tracker - Estadísticas en Vivo")
-st.subheader("Monitoreo en tiempo real para análisis de apuestas")
-
-# Inicialización de Selenium en modo headless (en segundo plano)
 @st.cache_resource
 def get_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Quita esto si quieres ver el navegador abrirse
+    # Argumentos críticos para entornos Linux en la nube (Docker/Streamlit Cloud)
+    chrome_options.add_argument("--headless=new")  
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     
-    service = Service(ChromeDriverManager().install())
-    return webdriver.Chrome(service=service, options=chrome_options)
+    try:
+        # En Linux/Streamlit Cloud con packages.txt, el binario suele mapearse directo
+        service = Service()
+        return webdriver.Chrome(service=service, options=chrome_options)
+    except Exception:
+        # Alternativa por si las rutas locales de Streamlit Cloud requieren asignación explícita
+        service = Service("/usr/bin/chromedriver")
+        chrome_options.binary_location = "/usr/bin/chromium-browser"
+        return webdriver.Chrome(service=service, options=chrome_options)
 
 def extraer_datos_partido(driver, url_partido):
     """Navega al partido, hace clic en estadísticas y extrae los datos."""
